@@ -3,6 +3,87 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Rubric
+### Compilation
+Code must compile without error with `cmake` and `make`.
+### Implementations
+#### The Model
+Describe the model in detail. This includes the state, actuators and update equations.
+
+Kinematic models are simplifications of dynamic models that ignore tire forces, gravity, and mass. This simplification reduces the accuracy of the models, but it also makes them more tractable.
+
+At low and moderate speeds, kinematic models often approximate the actual vehicle dynamics.
+
+The vehicle's state is captured by its position in coordinate space (x,y), its orientation (psi), and its velocity (v):
+
+[//]: # (Image References)
+[actuators]: ./images/actuators.png
+[cross_track_error]: ./images/cross_track_error.png
+[new_state_vector]: ./images/new_state_vector.png
+[orientation_error]: ./images/orientation_error.png
+[state_update_equations]: ./images/state_update_equations.png
+[state_vector]: ./images/state_vector.png
+
+![state vector image][state_vector]
+
+The actuators [delta (steering angle), acceleration (a)], or control inputs, to our system:
+
+![actuators image][actuators]
+
+Model how the vehicle state evolves through time:
+
+![state update equations image][state_update_equations]
+
+Model the cross track error (CTE):
+
+![cross track error image][cross_track_error]
+
+Model the orientation error:
+
+![orientation error image][orientation_error]
+
+The new vehicle state:
+
+![new state vector image][new_state_vector]
+
+#### Timestep Length and Elapsed Duration (N & dt)
+Discuss the reasoning behind the chosen *N* (timestep length) and *dt* (elapsed time between timesteps) values. Additionally, detail the previous values tried.
+
+The prediction horizon is the duration over which future predictions are made; it is the product of *N* and *dt*. *N* is the number of timesteps in the horizon. *N* also determines the number of variables optimized by the MPC. *dt* is how much time elapses between actuations.
+
+The values chosen for *N* and *dt* are 10 and 0.1 respectively. These were chosen based on the livestream demonstration and through the lessons, which state that *N* should be as large as possible while considering that it is a computational cost and *dt* should be as small as possible.
+
+In the case of driving a car, the prediction horizon (*N* * *dt*) should be a few seconds, at most. Beyond that horizon, the enviornment will change enough that it won't make sense to predict any further into the future.
+
+The goal of the Model Predictive Control is to optimize the control inputs. An optimizer will tune these inputs until a low cost vector of control inputs is found. The length of this vector is determined by *N*. Thus, *N* determines the number of variables optimized by the MPC.
+
+MPC attempts to approximate a continuous reference trajectory by means of discrete paths between actuations. Larger values of *dt* result in less frequent actuation, which makes it harder to accurately approximate a continuous reference trajectory. This is sometimes called "discretization error".
+
+A good approach to setting *N*, *dt*, and the prediction horizon is to first determine a reasonable range for the prediction horizon and then tune *dt* and *N* appropriately, keeping the effect of each in mind.
+
+#### Polynomial Fitting and MPC Preprocessing
+A polynomial is fitted to waypoints.
+
+If the waypoints are preprocessed, the vechicle state, and/or actuators prior to the MPC procedure, it is described.
+
+The waypoints are transformed to the vehicle's coordinate system (main.cpp lines 96-102). Because the vehicle's x and y coordinates and the orientation angle are at the origin and 0, it will be easier to fit a polynomial to the waypoints, the polynomial that provides a target path for the vehicle.
+
+#### Model Predictive Control with Latency
+Implement Model Predictive Control that handles a 100 millisecond latency. Provide details on how latency is dealt with.
+
+*dt* is 100ms which is the same as the latency. The kinematic equations depend on the actuations from the previous timestep (*dt*). Considering latency of 100ms, the kinematic equations have to be altered since the actuations are being applied an additional timestep (*dt*) later (MPC.cpp lines 177-180).
+
+The lessons suggested several cost functions involving minimizing: CTE, epsi, velocity compared to a reference velocity, delta (acceleration), change in delta (change in acceleration). An additional cost function was implemented using velocity and acceleration to affect cornering (MPC.cpp lines 99-125).
+
+Note the multipliers used in the cost functions to tune the MPC.
+
+### Simulation
+The vehicle must successfully drive a lap around the track. No tire may leave the drivable portion of the track surface. The car may not pop up onto ledges or roll over any surfaces that would otherwise be considered unsafe (if humans were in the vehicle).
+
+The car can't go over the curb, but, driving on the lines before the curb is ok.
+
+[Here](https://youtu.be/S1-ZBVvbJ8E) is a recording showing the vehicle successfully transversing the Simulator track.
+
 ## Dependencies
 
 * cmake >= 3.5
